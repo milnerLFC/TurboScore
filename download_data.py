@@ -71,6 +71,7 @@ def load_data(base_path, all_seasons, usecols, keys, unique_key = True):
                                 df = pd.read_csv(file_path, usecols = usecols, encoding='ISO-8859-1')
                                 df.insert(1, 'Season', season_value)  
                                 data_frames.append(df.dropna(subset = ['Div','Date','HomeTeam','AwayTeam','FTHG','FTAG','FTR'])) #,'HTHG','HTAG'
+                                
                             except:
                                 try:
                                     df = pd.read_csv(file_path, usecols = no_time, encoding='ISO-8859-1')
@@ -81,8 +82,9 @@ def load_data(base_path, all_seasons, usecols, keys, unique_key = True):
                                     print(f"Error loading file {entry.name}: {e}")
 
     result_df = pd.concat(data_frames, ignore_index=True)
-
-    return result_df
+    result_df.insert(2, 'DateTime', pd.to_datetime(result_df['Date'] + ' ' + result_df['Time'], infer_datetime_format=True, dayfirst=True, errors='coerce'))
+    result_df = result_df.sort_values(by='DateTime').reset_index(drop=True)
+    return result_df.drop(['Date', 'Time'], axis=1)
 
 def load_fixtures(base_path, filename, usecols, current_season, leagues_keys, unique_key=True):
     try:
@@ -93,7 +95,9 @@ def load_fixtures(base_path, filename, usecols, current_season, leagues_keys, un
         else:
             df = df[df['Div'].isin(leagues_keys)]  # Keep games with 'Div' in leagues_keys
             df.insert(1, 'Season', current_season)  
-        return df
+        df.insert(2,'DateTime',pd.to_datetime(df['Date'] + ' ' + df['Time'], infer_datetime_format=True, dayfirst=True, errors='coerce'))
+        df = df.sort_values(by='DateTime').reset_index(drop=True)
+        return df.drop(['Date','Time'], axis = 1)
     except Exception as e:
         print(f"Error loading file {filename}: {e}")
 
